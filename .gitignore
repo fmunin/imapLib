@@ -1,0 +1,5 @@
+#created 26 Dec 2025 -F.R.Munin
+env/
+__pycache__/
+.ipynb_checkpoints/
+auth_string.txt

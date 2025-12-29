@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="buttons">
+    <file>img/funnel-small.png</file>
+    <file>img/prohibition.png</file>
+    <file>img/folder-export.png</file>
+  </qresource>
+  <qresource prefix="newPrefix"/>
+</RCC>

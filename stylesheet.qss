@@ -1,0 +1,29 @@
+QMainWindow {
+    background-color: blue;
+    padding:10px;
+}
+
+/* #selector will match widget name */
+#centralwidget{  
+    background:  blue ;
+    padding:15px;            
+}
+
+#emailGroup{
+	background: qlineargradient(x1: 0, y1: 0,
+                x2: 0, y2: 1,
+                stop: 0 #00BFFF,
+                stop: 0.75 #FEFEFE );
+}
+
+#bottomPanel {
+	background: qlineargradient(x1: 0, y1: 0,
+                x2: 0, y2: 1,
+                stop: 0  #FEFEFE ,
+                stop: 0.75  #00BFFF);
+}
+
+
+QHeaderView::section {
+    background-color: lightblue
+    }
