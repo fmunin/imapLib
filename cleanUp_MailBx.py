@@ -38,6 +38,7 @@ class iMapMailBox():
     '''
     def __init__(self):
         pass
+
     @property
     def conn(self):
         return self._conn
@@ -66,6 +67,13 @@ class iMapMailBox():
     def password(self, value):
             self._pwd = value
 
+    @property
+    def current_Folder(self):
+        return self._current_Folder
+    @current_Folder.setter
+    def current_Folder(self, value):
+        self._current_Folder = value
+
     def createConn(self):
         try:
             self._conn = IMAP4_SSL(self.server)
@@ -86,10 +94,48 @@ class iMapMailBox():
         self.conn.logout()
         
     def _createQry_BEFORE(self, cutOffDt):
-        return  "(BEFORE {0})".format(cutOffDt.strftime("%d-%b-%Y"))
-         
+        return  f"(BEFORE {cutOffDt.strftime('%d-%b-%Y')})"
+             
     def _createQry_DOMAIN(self, domain):
         return f'(FROM "{domain}")'
+
+    def _kb_to_mb_ (self,kb_size):
+        '''
+        Converts given kb_size into mB size
+        '''
+        return kb_size / 1024
+    
+    def get_quota_storage(self):
+        ''' 
+        Queries mailbox for storage quota in mB
+        
+        '''
+        regex_qry_storage =r"STORAGE\s([^\s]*)\s([^\s\)]*)"
+        mailBoxName="INBOX"
+        r1,r2 = self.conn.getquotaroot(mailBoxName)
+        results = r2[1][0].decode('ASCII')        
+        match = re.search(regex_qry_storage,results)
+        if match is not None:
+            STORAGE_ACTUAL = self._kb_to_mb_(int(match[1]))
+            STORAGE_QUOTA = self._kb_to_mb_(int(match[2]))
+        else:    
+            STORAGE_ACTUAL = -1
+            STORAGE_QUOTA = -1
+        return STORAGE_ACTUAL, STORAGE_QUOTA
+    
+    def get_quota_messages(self):
+        regex_qry_msg =r"MESSAGE\s([^\s]*)\s([^\s|)]*)"
+        mailBoxName="INBOX"
+        r1,r2 = self.conn.getquotaroot(mailBoxName)
+        results = r2[1][0].decode('ASCII')        
+        match = re.search(regex_qry_msg,results)
+        if match is not None:
+            msg_ACTUAL = match[1]
+            msg_QUOTA = match[2]
+        else:    
+            msg_ACTUAL = -1
+            msg_QUOTA = -1
+        return int(msg_ACTUAL), int(msg_QUOTA)
     
     def get_Folder_List(self):
         rspns,folder_list = self.conn.list()
@@ -104,7 +150,11 @@ class iMapMailBox():
 
     def select_folder (self, folder_nm):
         typ, detail = self.conn.select(folder_nm)
-        return int(detail[0].decode('ASCII'))
+        if typ == 'OK':        
+            self.current_Folder = folder_nm
+            return int(detail[0].decode('ASCII'))
+        else:
+            return False
 
     def search_folder(self, qry):
         typ, dtl = self.conn.search(None, qry)
@@ -150,7 +200,7 @@ class iMapMailBox():
             return False    
     
     def __ExtractID__ (self,srcString):
-        regEx_id="^(\d+)[^{]+{(\d+)}"
+        regEx_id= r"^(\d+)[^{]+{(\d+)}"
         match = re.search(regEx_id,srcString)
         if match:
             return match.group(1),match.group(2)
@@ -253,12 +303,13 @@ def deleteAgedMsg (serverURL, userID, pwd, age):
     if not mailBox.logIn():
          print (f"Unable to  to mailbox {mailBox.server}")
          sys.exit()#exit program
-    else:
-         print (f"BEFORE DELETE PROCESS - inbox has {mailBox.select_folder('INBOX')} emails")
+    
+    email_count_start = mailBox.select_folder('INBOX')
+    print (f"BEFORE DELETE PROCESS - inbox has {email_count_start} emails")
     cutoffDt = create_CutOffDt(age) #cutoff date is any emails older than 90 day
-    print(mailBox.find_eMails_priorToDt(cutoffDt))
-    qry = mailBox._createQry_BEFORE(cutoffDt)
-    mailBox.delete_Selected_eMails(qry)
+    emailID_LIST = mailBox.find_eMails_priorToDt(cutoffDt)
+    print(f"Found {len(emailID_LIST)} emails prior to {cutoffDt}")
+    mailBox.delete_eMails_ById(emailID_LIST)
     print (f"AFTER DELETE PROCESS inbox has {mailBox.select_folder('INBOX')} emails")
     mailBox.close() #clean up connectionsvt
 

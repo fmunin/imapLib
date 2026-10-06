@@ -133,8 +133,8 @@ def SetupOptionParser():
 GOOGLE_ACCOUNTS_BASE_URL = 'https://accounts.google.com'
 
 
-# Hardcoded redirect URI.
-REDIRECT_URI = 'https://oauth2.dance/'
+# Hardcoded redirect URI.- updated 2026-02-12
+REDIRECT_URI = 'https://www.mnsltn.com/oauth/oauth_dance.html'
 
 
 def AccountsUrl(command):
@@ -221,6 +221,7 @@ def AuthorizeTokens(client_id, client_secret, authorization_code):
     params['grant_type'] = 'authorization_code'
     request_url = AccountsUrl('o/oauth2/token')
     print(f'Requesting token from {request_url}')
+    print(f"Request params from {urllib.parse.urlencode(params).encode('utf-8')}")
     response = urllib.request.urlopen(request_url, urllib.parse.urlencode(params).encode('utf-8')).read()
     return json.loads(response)
   except urllib.error.HTTPError as e:
